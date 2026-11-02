@@ -1,0 +1,19 @@
+{
+  "name": "iptv-schweiz-8k",
+  "pages_build_output_dir": "dist",
+  "compatibility_date": "2026-11-02",
+  "vars": {
+    "NODE_VERSION": "24",
+    "PUBLIC_SITE_URL": "https://iptv-schweiz-8k.pages.dev",
+    "PUBLIC_INDEXABLE": "false"
+  },
+  "env": {
+    "preview": {
+      "vars": {
+        "NODE_VERSION": "24",
+        "PUBLIC_SITE_URL": "https://iptv-schweiz-8k.pages.dev",
+        "PUBLIC_INDEXABLE": "false"
+      }
+    }
+  }
+}
