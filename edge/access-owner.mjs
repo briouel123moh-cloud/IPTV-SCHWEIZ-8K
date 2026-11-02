@@ -17,17 +17,21 @@ async function ownerSigningKey(kid) {
   if (cached && now < ownerKeysExpire) return cached;
   // Bound unknown-kid refreshes as well as retries during an outage.
   if (now < ownerKeyRetryAfter) return undefined;
-  ownerKeyRetryAfter = now + 30_000;
-  const response = await fetch(ownerIssuer + "/cdn-cgi/access/certs", {
-    redirect: "error", signal: AbortSignal.timeout(5_000)
-  });
-  if (!response.ok) return undefined;
-  const { keys } = await response.json();
-  if (!Array.isArray(keys)) return undefined;
-  ownerKeys = keys.filter(key => key.kty === "RSA" && (!key.alg || key.alg === "RS256")
-    && (!key.use || key.use === "sig") && typeof key.kid === "string");
-  ownerKeysExpire = now + 300_000;
-  return ownerKeys.find(key => key.kid === kid);
+  try {
+    const response = await fetch(ownerIssuer + "/cdn-cgi/access/certs", {
+      redirect: "manual", signal: AbortSignal.timeout(5_000)
+    });
+    if (!response.ok) return undefined;
+    const { keys } = await response.json();
+    if (!Array.isArray(keys)) return undefined;
+    ownerKeys = keys.filter(key => key.kty === "RSA" && (!key.alg || key.alg === "RS256")
+      && (!key.use || key.use === "sig") && typeof key.kid === "string");
+    ownerKeysExpire = now + 300_000;
+    return ownerKeys.find(key => key.kid === kid);
+  } finally {
+    // Each cold concurrent event may fetch independently, without sharing request-bound I/O.
+    ownerKeyRetryAfter = Date.now() + 30_000;
+  }
 }
 
 /** Only a signed Cloudflare Access application assertion for this owner grants access. */
