@@ -1,3 +1,5 @@
+import { ownerPreviewHost, serveOwnerPreview } from '../edge/owner-preview.mjs';
+
 // Country information is supplied by Cloudflare at its edge. Do not trust
 // user-provided forwarding chains or application cookies for this check.
 const resources = new Set(['/robots.txt', '/sitemap.xml', '/sitemap-index.xml', '/llms.txt', '/style.css', '/app.js', '/favicon.svg']);
@@ -9,6 +11,9 @@ function publicResource(pathname) {
 }
 
 export async function onRequest({ request, next }) {
+  if (new URL(request.url).hostname === ownerPreviewHost) {
+    return serveOwnerPreview(request, next);
+  }
   const country = String(request.cf?.country || request.headers.get('CF-IPCountry') || '').trim().toUpperCase();
   const pathname = new URL(request.url).pathname;
   if (country === 'MA' && !publicResource(pathname)) {
